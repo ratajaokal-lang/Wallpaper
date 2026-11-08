@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chess Coach</title>
+<meta name="description" content="Import your Lichess or Chess.com games, find your recurring mistakes, and get a personalised training plan. Runs entirely in your browser.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E♞%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<header class="top">
+  <div class="brand"><span class="logo">♞</span> Chess Coach</div>
+  <nav id="nav" role="tablist">
+    <button data-tab="import" role="tab">Import</button>
+    <button data-tab="games" role="tab">Games <span class="badge" id="gamesBadge">0</span></button>
+    <button data-tab="review" role="tab">Review</button>
+    <button data-tab="plan" role="tab">My plan</button>
+    <button data-tab="train" role="tab">Train</button>
+  </nav>
+</header>
+
+<main>
+  <!-- IMPORT -->
+  <section id="tab-import" class="tab">
+    <div class="hero card">
+      <h1>Find out why you lose — then fix it.</h1>
+      <p>Import your games, let the built-in engine check every move, and get a training plan built from <em>your</em> recurring mistakes. Everything runs in your browser; your games are stored only on this device.</p>
+      <div class="row"><button id="demoBtn" class="btn ghost">Try with demo games</button></div>
+    </div>
+
+    <div class="grid2">
+      <form id="fetchForm" class="card" autocomplete="off">
+        <h2>1 · Load your games</h2>
+        <div class="seg" role="radiogroup" aria-label="Site">
+          <label><input type="radio" name="site" value="lichess" checked><span>Lichess</span></label>
+          <label><input type="radio" name="site" value="chesscom"><span>Chess.com</span></label>
+        </div>
+        <label class="field">Username
+          <input id="username" name="username" type="text" placeholder="your username" required spellcheck="false" autocapitalize="off">
+        </label>
+        <div class="two">
+          <label class="field">How many recent games
+            <select id="count"><option>10</option><option>20</option><option selected>30</option><option>50</option><option>100</option></select>
+          </label>
+          <label class="field">Speed
+            <select id="speed"><option value="all">All speeds</option><option value="nobullet" selected>Blitz and slower</option><option value="rapid">Rapid and slower</option></select>
+          </label>
+        </div>
+        <button class="btn primary" id="fetchBtn" type="submit">Fetch &amp; analyze</button>
+        <p class="hint" id="fetchHint"></p>
+      </form>
+
+      <div class="card">
+        <h2>…or paste / upload PGN</h2>
+        <label class="field">Your name in the PGN
+          <input id="pgnUser" type="text" placeholder="e.g. the White/Black name that is you" spellcheck="false" autocapitalize="off">
+        </label>
+        <textarea id="pgnText" rows="6" placeholder="Paste one or many games in PGN format…" spellcheck="false"></textarea>
+        <div class="row">
+          <label class="btn ghost file">Choose .pgn file<input id="pgnFile" type="file" accept=".pgn,.txt" hidden></label>
+          <button class="btn primary" id="pgnBtn" type="button">Analyze PGN</button>
+        </div>
+        <p class="hint">Any site works, as long as the file has your name in the White/Black tags. Clock comments (<code>[%clk …]</code>) enable time-management advice.</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>2 · Analysis depth</h2>
+      <div class="row wrap">
+        <label class="field inline">Depth
+          <select id="level">
+            <option value="quick">Quick (fastest, finds big blunders)</option>
+            <option value="normal" selected>Normal (recommended)</option>
+            <option value="deep">Deep (slower, more precise)</option>
+          </select>
+        </label>
+        <button class="btn ghost danger" id="clearBtn" type="button">Delete all saved data</button>
+      </div>
+      <div id="progress" class="progress" hidden>
+        <div class="bar"><span id="bar"></span></div>
+        <div class="row"><span id="progText"></span><button class="btn ghost small" id="cancelBtn" type="button">Cancel</button></div>
+      </div>
+      <div id="importLog" class="log" aria-live="polite"></div>
+    </div>
+    <p class="fine">The built-in engine is a compact, fast alpha-beta engine — good at spotting hung pieces, missed tactics and mates, but weaker than Stockfish. Treat subtle “positional” flags as hints, not verdicts.</p>
+  </section>
+
+  <!-- GAMES -->
+  <section id="tab-games" class="tab" hidden>
+    <div class="card"><h2>Your analysed games</h2><div id="gamesList"></div></div>
+  </section>
+
+  <!-- REVIEW -->
+  <section id="tab-review" class="tab" hidden>
+    <div id="reviewEmpty" class="card empty" hidden>Pick a game in the <b>Games</b> tab to review it move by move.</div>
+    <div id="reviewWrap" class="review" hidden>
+      <div class="rv-left">
+        <div class="players" id="rvTop"></div>
+        <div id="rvBoard"></div>
+        <div class="players" id="rvBottom"></div>
+        <div class="row ctl">
+          <button class="btn ghost" id="rvStart" title="Start (Home)">⏮</button>
+          <button class="btn ghost" id="rvPrev" title="Back (←)">◀</button>
+          <button class="btn ghost" id="rvNext" title="Forward (→)">▶</button>
+          <button class="btn ghost" id="rvEnd" title="End">⏭</button>
+          <button class="btn ghost" id="rvFlip" title="Flip board (F)">⇅</button>
+          <button class="btn ghost" id="rvNextErr" title="Next of your mistakes (N)">Next mistake</button>
+        </div>
+        <div id="rvGraph" class="graph"></div>
+      </div>
+      <div class="rv-right">
+        <div class="card" id="rvInfo"></div>
+        <div class="card"><h3>Moves</h3><div id="rvMoves" class="moves"></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PLAN -->
+  <section id="tab-plan" class="tab" hidden>
+    <div id="planEmpty" class="card empty">Analyze some games first (Import tab) and your personalised plan appears here.</div>
+    <div id="planWrap" hidden></div>
+  </section>
+
+  <!-- TRAIN -->
+  <section id="tab-train" class="tab" hidden>
+    <div id="trainEmpty" class="card empty" hidden>Analyze some games first. The trainer replays positions where <em>you</em> went wrong.</div>
+    <div id="trainWrap" class="train" hidden>
+      <div class="tr-left">
+        <div id="trBoard"></div>
+      </div>
+      <div class="tr-right">
+        <div class="card">
+          <label class="field inline">Focus
+            <select id="trArea"></select>
+          </label>
+          <div id="trStatus"></div>
+          <div class="row wrap">
+            <button class="btn ghost" id="trHint">Hint</button>
+            <button class="btn ghost" id="trShow">Show answer</button>
+            <button class="btn primary" id="trNext">Next position</button>
+          </div>
+          <div id="trStats" class="fine"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="foot">Chess Coach · all analysis runs locally in your browser · <a href="https://lichess.org" rel="noopener">Lichess</a> &amp; <a href="https://chess.com" rel="noopener">Chess.com</a> data via their public APIs</footer>
+
+<script src="js/chess.js"></script>
+<script src="js/engine.js"></script>
+<script src="js/analyze.js"></script>
+<script src="js/stats.js"></script>
+<script src="js/sources.js"></script>
+<script src="js/board.js"></script>
+<script src="js/demo-data.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

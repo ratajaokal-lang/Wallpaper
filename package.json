@@ -1,0 +1,13 @@
+{
+  "name": "chess-coach",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Import your Lichess / Chess.com games, find recurring mistakes and get a personalised training plan. Static, dependency-free web app.",
+  "scripts": {
+    "test": "node --test tests/*.test.js",
+    "test:e2e": "node tests/e2e.js && node tests/e2e-fetch.js",
+    "demo-data": "node tools/make-demo.js",
+    "start": "python3 -m http.server 8080"
+  },
+  "license": "MIT"
+}
